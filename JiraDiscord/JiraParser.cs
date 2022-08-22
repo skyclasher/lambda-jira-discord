@@ -5,16 +5,18 @@ namespace JiraDiscord
 {
 	public static class JiraParser
 	{
-		public static JiraEvent Parse(JiraBody jiraBody)
+		public static JiraEvent? Parse(JiraBody jiraBody)
 		{
 			if (string.IsNullOrEmpty(jiraBody.WebhookEvent))
 			{
-				throw new ArgumentNullException("Webhook Event Missing!");
+				Console.WriteLine("Webhook Event Missing!");
+				return null;
 			}
 
 			if (jiraBody?.Issue?.IssueUrl == null || jiraBody.Issue.Key == null)
 			{
-				throw new ArgumentNullException("Issue url or key is missing!");
+				Console.WriteLine("Issue url or key is missing!");
+				return null;
 			}
 			else
 			{
@@ -43,7 +45,8 @@ namespace JiraDiscord
 				}
 				else
 				{
-					throw new Exception("Event is not supported");
+					Console.WriteLine("Event is not supported");
+					return null;
 				}
 				return jiraEvent;
 			}
@@ -70,6 +73,7 @@ namespace JiraDiscord
 						jiraEvent.Description = $"{item.FromString} moved to {item.ItemToString}";
 						jiraEvent.Author = jiraBody?.Issue?.IssueField?.Author?.DisplayName;
 						jiraEvent.Color = 7658746;
+						return;
 					}
 				}
 			}
@@ -79,7 +83,8 @@ namespace JiraDiscord
 		{
 			if (string.IsNullOrEmpty(jiraBody?.Comment?.Body))
 			{
-				throw new ArgumentNullException("Comment is missing!");
+				Console.WriteLine("Comment is missing!");
+				return;
 			}
 			else
 			{

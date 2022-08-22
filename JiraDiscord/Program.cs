@@ -26,17 +26,18 @@ namespace JiraDiscord
 		{
 			try
 			{
-				string discordDetail = apiProxyEvent.QueryStringParameters["proxy"];
-				string[] discordDetails = discordDetail.Split("/");
 
 				Console.WriteLine(apiProxyEvent.Body); // Keep this log for now to capture created/close sprint later
 				JiraBody jiraBody = JsonSerializer.Deserialize<JiraBody>(apiProxyEvent.Body)!;
-				JiraEvent jiraEvent = JiraParser.Parse(jiraBody);
+				JiraEvent? jiraEvent = JiraParser.Parse(jiraBody);
 
-				if (!string.IsNullOrEmpty(jiraEvent.EventTypeLabel))
+				if (jiraEvent != null && !string.IsNullOrEmpty(jiraEvent.EventTypeLabel))
 				{
 					string title = $"{jiraEvent.Key}: {jiraEvent.Summary}";
 					string desc = $"**{jiraEvent.EventTypeLabel}**\n{jiraEvent.Description}";
+					string discordDetail = apiProxyEvent.QueryStringParameters["proxy"];
+					string[] discordDetails = discordDetail.Split("/");
+
 					bool isCallSuccess = await DiscordWebhook.SendDiscordWebhook(discordDetails[0], discordDetails[1], title, jiraEvent.Url, desc, jiraEvent.Author, jiraEvent.Color);
 					if (!isCallSuccess)
 					{
@@ -47,7 +48,6 @@ namespace JiraDiscord
 						};
 					}
 				}
-
 
 				return new APIGatewayHttpApiV2ProxyResponse
 				{
