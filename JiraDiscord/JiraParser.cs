@@ -5,7 +5,7 @@ namespace JiraDiscord
 {
 	public static class JiraParser
 	{
-		public static JiraEvent? Parse(JiraBody jiraBody)
+		public static JiraEvent? Parse(JiraBody jiraBody, string projectKey)
 		{
 			if (string.IsNullOrEmpty(jiraBody.WebhookEvent))
 			{
@@ -13,7 +13,23 @@ namespace JiraDiscord
 				return null;
 			}
 
-			if (jiraBody?.Issue?.IssueUrl == null || jiraBody.Issue.Key == null)
+			if (Constant.JiraEvent.SprintEvent.Contains(jiraBody.WebhookEvent))
+			{
+				if (jiraBody != null && jiraBody.Sprint != null && jiraBody.Sprint.SelfUrl != null && jiraBody.Sprint.BoardId != 0)
+				{
+					JiraEvent jiraEvent = new JiraEvent()
+					{
+						Url = ConstructSprintUrl(jiraBody.Sprint.SelfUrl, projectKey, jiraBody.Sprint.BoardId),
+						Summary = $"{projectKey}: {jiraBody.Sprint.Name}",
+						EventTypeLabel = $"{jiraBody.Sprint.Name}"
+					};
+					StartSprint(jiraBody, ref jiraEvent, projectKey);
+					return jiraEvent;
+				}
+				Console.WriteLine("Board Id or Self url is missing!");
+				return null;
+			}
+			else if (jiraBody?.Issue?.IssueUrl == null || jiraBody.Issue.Key == null)
 			{
 				Console.WriteLine("Issue url or key is missing!");
 				return null;
@@ -23,7 +39,7 @@ namespace JiraDiscord
 				JiraEvent jiraEvent = new JiraEvent()
 				{
 					Key = jiraBody.Issue.Key,
-					Url = ConstructUrl(jiraBody.Issue.IssueUrl, jiraBody.Issue.Key),
+					Url = ConstructIssueUrl(jiraBody.Issue.IssueUrl, jiraBody.Issue.Key),
 					Summary = jiraBody?.Issue?.IssueField?.Summary
 				};
 
@@ -49,6 +65,30 @@ namespace JiraDiscord
 					return null;
 				}
 				return jiraEvent;
+			}
+		}
+
+		private static void StartSprint(JiraBody? jiraBody, ref JiraEvent jiraEvent, string projectKey)
+		{
+			if (jiraBody?.WebhookEvent == Constant.JiraEvent.SprintStarted)
+			{
+				jiraEvent.Summary = $"{projectKey}: Sprint Started";
+				jiraEvent.Description = jiraBody?.Sprint?.Goal;
+				jiraEvent.Color = 12892909;
+			}
+			if (jiraBody?.WebhookEvent == Constant.JiraEvent.SprintClosed)
+			{
+				jiraEvent.Summary = $"{projectKey}: Sprint Closed";
+				jiraEvent.Description = jiraBody?.Sprint?.Goal;
+				jiraEvent.Color = 16771755;
+			}
+
+			if (!string.IsNullOrEmpty(jiraBody?.Sprint?.StartDate) && !string.IsNullOrEmpty(jiraBody?.Sprint?.EndDate))
+			{
+				DateTime startDate = DateTime.Parse(jiraBody.Sprint.StartDate);
+				DateTime endDate = DateTime.Parse(jiraBody.Sprint.EndDate);
+
+				jiraEvent.Author = $"{startDate.ToString("dd-MM-yyyy")} - {endDate.ToString("dd-MM-yyyy")}";
 			}
 		}
 
@@ -95,10 +135,21 @@ namespace JiraDiscord
 			}
 		}
 
-		private static string ConstructUrl(string url, string key)
+		private static string ConstructIssueUrl(string url, string key)
 		{
 			Uri uri = new Uri(url);
 			return $"https://{uri.Host}/browse/{key}";
+		}
+		private static string ConstructSprintUrl(string url, string projectKey, int boardId)
+		{
+			if (string.IsNullOrEmpty(projectKey))
+			{
+				Console.WriteLine("Project Key is empty!");
+				return string.Empty;
+			}
+
+			Uri uri = new Uri(url);
+			return $"https://{uri.Host}/jira/software/projects/{projectKey}/boards/{boardId}";
 		}
 	}
 }

@@ -29,11 +29,22 @@ namespace JiraDiscord
 
 				Console.WriteLine(apiProxyEvent.Body); // Keep this log for now to capture created/close sprint later
 				JiraBody jiraBody = JsonSerializer.Deserialize<JiraBody>(apiProxyEvent.Body)!;
-				JiraEvent? jiraEvent = JiraParser.Parse(jiraBody);
 
-				if (jiraEvent != null && !string.IsNullOrEmpty(jiraEvent.EventTypeLabel))
+				string projectKey = apiProxyEvent.QueryStringParameters["projectKey"];
+				JiraEvent? jiraEvent = JiraParser.Parse(jiraBody, projectKey);
+
+				if (jiraEvent != null && !string.IsNullOrEmpty(jiraEvent.EventTypeLabel) && !string.IsNullOrEmpty(jiraEvent.Url))
 				{
-					string title = $"{jiraEvent.Key}: {jiraEvent.Summary}";
+					string title = string.Empty;
+					if (string.IsNullOrEmpty(jiraEvent.Key))
+					{
+						title = $"{jiraEvent.Summary}";
+					}
+					else
+					{
+						title = $"{jiraEvent.Key}: {jiraEvent.Summary}";
+					}
+
 					string desc = $"**{jiraEvent.EventTypeLabel}**\n{jiraEvent.Description}";
 					string discordDetail = apiProxyEvent.QueryStringParameters["proxy"];
 					string[] discordDetails = discordDetail.Split("/");

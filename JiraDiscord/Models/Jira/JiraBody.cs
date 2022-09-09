@@ -15,5 +15,8 @@ namespace JiraDiscord.Models.Jira
 
 		[JsonPropertyName("changelog")]
 		public ChangeLog? ChangeLog { get; set; }
+
+		[JsonPropertyName("sprint")]
+		public JiraSprint? Sprint { get; set; }
 	}
 }
