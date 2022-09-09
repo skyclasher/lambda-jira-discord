@@ -9,7 +9,7 @@ Setup instruction:
 5) Define your preferred route.
 6) Create a webhook in Discord, take note the URL will contain the discord id and token.
 7) Create JIRA webhook from setting->system->WebHooks.
-8) Fill in the URL with this format: (https://[Api_Url]/[Route]?proxy=[Discord_Id]/[Discord_Token])
+8) Fill in the URL with this format: (https://[Api_Url]/[Route]?proxy=[Discord_Id]/[Discord_Token]&projectKey=${project.key})
 9) Save and test the webhook.
 
 The diagram below shows how the flow work. Credit to aucerna. See his blog post to see more depth in technical view. 
