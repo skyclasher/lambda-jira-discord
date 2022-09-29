@@ -4,10 +4,10 @@ A simple AWS lambda function that takes a JIRA webhook payload, creates a Discor
 Setup instruction:
 01) Create an AWS Lambda function. Choose .Net 6(C#/PowerShell) as the runtime and upload the published code.
 02) Define the environment variable in lambda:-
-	a) discord_id		- Discord webhook id
-	b) discord_token	- Discord webhook token
-	c) jira_api_key		- Jira Rest API token key.
-	d) jira_email		- Jira email of the generated token.
+    - discord_id		- Discord webhook id
+    - discord_token	- Discord webhook token
+    - jira_api_key		- Jira Rest API token key.
+    - jira_email		- Jira email of the generated token.
 03) Change the handler to JiraDiscord::JiraDiscord.Program::Handler
 04) Add DynamoDb table named "jira_user_mapping" with hash key of "jira_account_id" string. DynamoDb is used to store user mapping of jira account id and the display name.
 05) Add the DynamoDb accsess to the lambda role.
