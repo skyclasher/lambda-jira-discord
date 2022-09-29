@@ -1,6 +1,7 @@
 ﻿using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
 using Amazon.Lambda.Serialization.SystemTextJson;
+using JiraDiscord.Helper;
 using JiraDiscord.Models.Jira;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -26,11 +27,21 @@ namespace JiraDiscord
 		{
 			try
 			{
-
-				Console.WriteLine(apiProxyEvent.Body); // Keep this log for now to capture created/close sprint later
+				// Keep this log for now to capture created/close sprint to find the bug on created sprint
+				Console.WriteLine(JsonSerializer.Serialize(apiProxyEvent));
+				Console.WriteLine(apiProxyEvent.Body);
 				JiraBody jiraBody = JsonSerializer.Deserialize<JiraBody>(apiProxyEvent.Body)!;
 
+				if (!apiProxyEvent.QueryStringParameters.ContainsKey("projectKey"))
+				{
+					Console.WriteLine("Project key or proxy is missing from path parameter!");
+					return new APIGatewayHttpApiV2ProxyResponse
+					{
+						StatusCode = 200,
+					};
+				}
 				string projectKey = apiProxyEvent.QueryStringParameters["projectKey"];
+
 				JiraEvent? jiraEvent = JiraParser.Parse(jiraBody, projectKey);
 
 				if (jiraEvent != null && !string.IsNullOrEmpty(jiraEvent.EventTypeLabel) && !string.IsNullOrEmpty(jiraEvent.Url))
@@ -46,10 +57,8 @@ namespace JiraDiscord
 					}
 
 					string desc = $"**{jiraEvent.EventTypeLabel}**\n{jiraEvent.Description}";
-					string discordDetail = apiProxyEvent.QueryStringParameters["proxy"];
-					string[] discordDetails = discordDetail.Split("/");
 
-					bool isCallSuccess = await DiscordWebhook.SendDiscordWebhook(discordDetails[0], discordDetails[1], title, jiraEvent.Url, desc, jiraEvent.Author, jiraEvent.Color);
+					bool isCallSuccess = await DiscordWebhook.SendDiscordWebhook(title, jiraEvent.Url, await GenericHelper.ResolveUser(desc), jiraEvent.Author, jiraEvent.Color);
 					if (!isCallSuccess)
 					{
 						return new APIGatewayHttpApiV2ProxyResponse
@@ -73,7 +82,6 @@ namespace JiraDiscord
 					StatusCode = 500,
 				};
 			}
-
 		}
 	}
 }
