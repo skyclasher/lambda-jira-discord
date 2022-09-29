@@ -11,9 +11,19 @@ namespace JiraDiscord
 		// https://discordapp.com/developers/docs/resources/channel#embed-limits
 		static readonly int MAX_DESCRIPTION_LENGTH = 2048;
 
-		public static async Task<bool> SendDiscordWebhook(string discordId, string discordToken, string title, string? url, string description, string? author, int color)
+
+		static readonly string? DISCORD_ID = Environment.GetEnvironmentVariable("discord_id");
+		static readonly string? DISCORD_TOKEN = Environment.GetEnvironmentVariable("discord_token");
+
+		public static async Task<bool> SendDiscordWebhook(string title, string? url, string description, string? author, int color)
 		{
-			var client = new RestClient($"https://discordapp.com/api/webhooks/{discordId}/{discordToken}");
+			if (string.IsNullOrEmpty(DISCORD_ID) || string.IsNullOrEmpty(DISCORD_TOKEN))
+			{
+				Console.WriteLine("Discord id or token is not defined in the lambda enviroment variable.");
+				return false;
+			}
+
+			var client = new RestClient($"https://discordapp.com/api/webhooks/{DISCORD_ID}/{DISCORD_TOKEN}");
 			var request = new RestRequest();
 			request.AddHeader("User-Agent", USER_AGENT);
 			request.AddJsonBody(ConstructBodyString(title, url, description, author, color));
@@ -26,8 +36,8 @@ namespace JiraDiscord
 			}
 			else
 			{
-				Console.WriteLine(response.StatusCode + " " + response.Content);
-				Console.WriteLine(response.ErrorMessage + " " + response.ErrorException);
+				Console.WriteLine($"{response.StatusCode} {response.Content}");
+				Console.WriteLine($"{response.ErrorMessage} {response.ErrorException}");
 				client.Dispose();
 				return false;
 			}

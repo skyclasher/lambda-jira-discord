@@ -1,4 +1,5 @@
 ﻿using JiraDiscord.Constants;
+using JiraDiscord.Helper;
 using JiraDiscord.Models.Jira;
 
 namespace JiraDiscord
@@ -19,7 +20,7 @@ namespace JiraDiscord
 				{
 					JiraEvent jiraEvent = new JiraEvent()
 					{
-						Url = ConstructSprintUrl(jiraBody.Sprint.SelfUrl, projectKey, jiraBody.Sprint.BoardId),
+						Url = GenericHelper.ConstructSprintUrl(jiraBody.Sprint.SelfUrl, projectKey, jiraBody.Sprint.BoardId),
 						Summary = $"{projectKey}: {jiraBody.Sprint.Name}",
 						EventTypeLabel = $"{jiraBody.Sprint.Name}"
 					};
@@ -39,7 +40,7 @@ namespace JiraDiscord
 				JiraEvent jiraEvent = new JiraEvent()
 				{
 					Key = jiraBody.Issue.Key,
-					Url = ConstructIssueUrl(jiraBody.Issue.IssueUrl, jiraBody.Issue.Key),
+					Url = GenericHelper.ConstructIssueUrl(jiraBody.Issue.IssueUrl, jiraBody.Issue.Key),
 					Summary = jiraBody?.Issue?.IssueField?.Summary
 				};
 
@@ -57,7 +58,7 @@ namespace JiraDiscord
 				}
 				else if (string.Equals(jiraBody?.WebhookEvent, Constant.JiraEvent.CommentUpdated))
 				{
-					Comment(jiraBody, ref jiraEvent, "Comment Created");
+					Comment(jiraBody, ref jiraEvent, "Comment Updated");
 				}
 				else
 				{
@@ -133,23 +134,6 @@ namespace JiraDiscord
 				jiraEvent.Author = jiraBody?.Comment?.UpdateAuthor?.DisplayName;
 				jiraEvent.Color = 4540783;
 			}
-		}
-
-		private static string ConstructIssueUrl(string url, string key)
-		{
-			Uri uri = new Uri(url);
-			return $"https://{uri.Host}/browse/{key}";
-		}
-		private static string ConstructSprintUrl(string url, string projectKey, int boardId)
-		{
-			if (string.IsNullOrEmpty(projectKey))
-			{
-				Console.WriteLine("Project Key is empty!");
-				return string.Empty;
-			}
-
-			Uri uri = new Uri(url);
-			return $"https://{uri.Host}/jira/software/projects/{projectKey}/boards/{boardId}";
 		}
 	}
 }
